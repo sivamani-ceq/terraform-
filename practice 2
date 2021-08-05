@@ -1,0 +1,126 @@
+provider  "aws" {
+    region     = "us-east-2"
+    access_key = "AKIAZF2ONWCF37HKQGHA"
+    secret_key = "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"
+}
+
+resource "aws_instance" "myfirstserver" {
+    ami                 = "ami-0443305dabd4be2bc"
+    instance_type       = "t2.micro"
+    tags                =  {
+        name            = "karthik"
+    }
+}
+
+resource "aws_vpc" "prod-vpc" {
+    cidr_block = "10.0.0.0/16"
+    tags = {
+        name = " prod"
+    }
+}
+
+resource "aws_internet_gatway" "gw" {
+    vpc_id = aws_vpc.prod_vpc.id
+}
+
+resource "aws_route_table" "prod_route_table"{
+    vpc_id = aws_vpc_prod.id
+    route{
+        cidr_block = "0.0.0.0/0"
+        gateway_id = aws_internet_gateway.gw.id
+    }
+}
+
+resource "aws_subnet""subnet-1" {
+    vpc_id = aws_vpc.prod-vpc.id
+    cidr-block = "10.0.1.0/24"
+    availability_zone = "us-east-2a"
+    tags = {
+        name = "prod-subnet"
+    }
+}
+
+resource "aws_route_table_association" "a" {
+    subnet_id  = aws_subnet.subnet-1.id
+    route_table_id = aws_route_table.prod_table_.id
+}
+
+resource "aws_security_group" "allow_web"{
+    name  = "allow_web_traffic"
+    decription = "allow_web inboud traffic"
+    vpc_id  = aws_vpc.prod_vpc.id
+    ingress{
+        desccription = "https"
+        from_port    = "443"
+        to_port      = "443"
+        protocol     = "tcp"
+        cidr_block   = ["0.0.0.0/0"]
+    }
+
+    ingess{
+        description = "http"
+        from_port   = "80"
+        to_port     = "80"
+        protocol    = "tcp"
+        cidr_block  = ["0.0.0.0/0"]
+    }
+
+    ingress {
+        description = "ssh"
+        from_port   = "22"
+        to_port     = "22"
+        protocol    = "tcp"
+        cidr_block  = ["0.0.0.0/0"]
+    }
+
+    egress {
+        from_port  = "0"
+        to_port    = "0"
+        protocol   = "-1"
+        cidr_block = ["0.0.0.0/0"]
+    }
+
+    tags = {
+        name = "allow_web"
+    }
+
+    resource "aws_network_interface" "web.server.nic"{
+        subnet_id    = aws_subnet.subnet-1.id
+        private_ip   = ["10.0.1.50"]
+        security_group = [aws_security_group.allow_web.id]
+        }
+
+    resource "aws_eip"  " one"{
+        vpc                       = true
+        network_interface         = aws_network_interface.web_server-nic.id
+        associate_with_private_ip = "10.0.1.50"
+        depends_on                = aws_internet_gatway.gw
+        }
+
+    resource "aws_instance" "web_server_instance" {
+        ami                 = "ami-0443305dabd4be2bc"
+        instance_type       = "t2.micro"
+        availability_zone   = "us-east-2a"
+        }
+    
+    resource "aws_s3_bucket" "mys3"{
+       bucket    = "karthik"
+        }
+        network_interface {
+            device_index  = 0
+            aws_network_interface_id = aws_network_interface.web_server_nic.id
+        }
+
+        user_data   = <<-EDF
+                      sudo apt update - y
+                      sudo apt install apache -y
+                      sudo systemctl1 start apache2
+                      sudo bash -c "echo cloudeq cloudeq >/var/www/html/index.html
+                      EDF
+        tags = {
+            name = "web server"
+        }              
+    }
+
+
+}
