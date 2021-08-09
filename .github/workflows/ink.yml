@@ -11,6 +11,5 @@ jobs:
       - name: Run a one-line script
         run: echo Hello, world!
       - name: create a file and directory
-        run: mkdir acer
-             touch acer1
+        run: mkdir acer , touch acer1
              
