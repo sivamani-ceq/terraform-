@@ -2,7 +2,7 @@ name: 'Debug workflow'
 on: [push]
 
 jobs:
-  build:
+   build:
     name: Debug
     runs-on: ubuntu-latest
     steps:
