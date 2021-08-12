@@ -1,0 +1,28 @@
+name: Node CI
+on: [push] 
+
+jobs:
+  build:
+  
+    runs-on: ${{ matrix.os }}
+     
+    strategy :
+      matrix : 
+          node-version: [8.x,10.x.12.x]
+          os : [macos-latest,windows-latest,ubuntu-18.04]
+       
+    steps:
+       - uses: action/checkout@v1
+       - name: use Node.js ${{matrix .node-version}}
+         uses: actions/setup-node @v1
+         with:
+           node-version: ${{matrix.node-vbersion}}
+       - name : npm install,build, and test
+          run :|
+          npm ci
+          npm run build --if-present
+          npm test
+         env:
+           CI: true
+          
+    
